@@ -3,6 +3,13 @@
   "icon": "ic_sensa",
   "format": [
     {
+      "name": "Angular Displacement",
+      "start_index_inclusive": 5,   //TODO what?
+      "end_index_exclusive": 9,
+      "reversed": true,  //read the file backwards, recent results are at the bottom
+      "data_type": "FLOAT"
+    },
+    {
       "name": "Temperature",
       "start_index_inclusive": 5,
       "end_index_exclusive": 9,

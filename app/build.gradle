@@ -7,11 +7,11 @@ apply plugin: 'io.fabric'
 android {
     def globalConfiguration = rootProject.extensions.getByName("ext")
 
-    compileSdkVersion globalConfiguration["androidCompileSdkVersion"]
-    buildToolsVersion globalConfiguration["androidBuildToolsVersion"]
+    compileSdkVersion 28
+    buildToolsVersion '28.0.3'
     defaultConfig {
         applicationId "com.aconno.sensorics"
-        manifestPlaceholders = [fabricAPIKey: sensorics_fabricKey]
+        manifestPlaceholders = [fabricAPIKey: "13954e8cda7413cc11787045f6206dd240089b09"]
         minSdkVersion globalConfiguration["androidMinSdkVersion"]
         targetSdkVersion globalConfiguration["androidTargetSdkVersion"]
         versionCode globalConfiguration["sensoricsVersionCode"]
@@ -56,12 +56,10 @@ dependencies {
     def presentationTestDependencies = rootProject.ext.presentationTestDependencies
     def developmentDependencies = rootProject.ext.developmentDependencies
     def releaseDependencies = rootProject.ext.releaseDependencies
-
     implementation project(':domain')
     implementation project(':device')
     implementation project(':data')
-
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation presentationDependencies.kotlin
     implementation presentationDependencies.appCompatv7
     implementation presentationDependencies.cardviewv7
@@ -84,13 +82,10 @@ dependencies {
     implementation(presentationDependencies.crashlytics) {
         transitive = true
     }
-
     debugImplementation developmentDependencies.leakCanary
     releaseImplementation releaseDependencies.leakCanary
-
     testImplementation presentationTestDependencies.kotlinJUnit
     testImplementation presentationTestDependencies.junit
-
     androidTestImplementation presentationTestDependencies.mockito
     androidTestImplementation presentationTestDependencies.espresso
     androidTestImplementation presentationTestDependencies.testingSupportLib
@@ -100,4 +95,5 @@ dependencies {
 repositories {
     maven { url 'https://jitpack.io' }
     maven { url 'https://maven.fabric.io/public' }
+    maven { url "https://google.bintray.com/flexbox-layout" }
 }
