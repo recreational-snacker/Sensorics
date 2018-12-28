@@ -45,7 +45,7 @@ class AdvertisementFormatReader {
         return gson.fromJson(data, GenericFormatModel::class.java)
     }
 
-    private fun getFileData(assetManager: AssetManager, fileName: String): String {
+    fun getFileData(assetManager: AssetManager, fileName: String): String {
         val inputStream = assetManager.open(fileName)
         val size = inputStream.available()
         val buffer = ByteArray(size)

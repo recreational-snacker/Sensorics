@@ -1,5 +1,6 @@
 package com.aconno.sensorics
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.Service
 import android.content.BroadcastReceiver
@@ -118,13 +119,15 @@ class BluetoothScanningService : Service() {
     private var closeConnectionUseCase: CloseConnectionUseCase? = null
     private var publishReadingsUseCase: PublishReadingsUseCase? = null
     private var publishers: MutableList<Publisher>? = null
+    private val gyro500Dps = 0.01750f
+    private val angularDisplacementName = "Angular Displacement"
 
     private val bluetoothScanningServiceComponent: BluetoothScanningServiceComponent by lazy {
         val sensoricsApplication: SensoricsApplication? = application as? SensoricsApplication
         DaggerBluetoothScanningServiceComponent.builder()
-            .appComponent(sensoricsApplication?.appComponent)
-            .bluetoothScanningServiceModule(BluetoothScanningServiceModule(this))
-            .build()
+                .appComponent(sensoricsApplication?.appComponent)
+                .bluetoothScanningServiceModule(BluetoothScanningServiceModule(this))
+                .build()
     }
 
     override fun onBind(intent: Intent): IBinder? {
@@ -143,23 +146,23 @@ class BluetoothScanningService : Service() {
         startForeground(1, notification)
 
         val filterByDevice =
-            intent?.getBooleanExtra(BLUETOOTH_SCANNING_SERVICE_EXTRA, false) ?: false
+                intent?.getBooleanExtra(BLUETOOTH_SCANNING_SERVICE_EXTRA, false) ?: false
 
         if (filterByDevice && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             //send values only while scanning with device filter
             initPublishers()
 
             getSavedDevicesMaybeUseCase.execute()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe {
-                    bluetooth.startScanning(it)
-                    running = true
-                    startRecording()
-                    startLogging()
-                    startSyncing()
-                    handleInputsForActions()
-                }
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe {
+                        bluetooth.startScanning(it)
+                        running = true
+                        startRecording()
+                        startLogging()
+                        startSyncing()
+                        handleInputsForActions()
+                    }
         } else {
             bluetooth.startScanning()
             running = true
@@ -177,51 +180,51 @@ class BluetoothScanningService : Service() {
 
             publishReadingsUseCase?.let {
                 it.execute(readings)
-                    .subscribeOn(Schedulers.io())
-                    .flatMapIterable { it }
-                    .map {
-                        val data = it.getPublishData()
-                        data.lastTimeMillis = System.currentTimeMillis()
+                        .subscribeOn(Schedulers.io())
+                        .flatMapIterable { it }
+                        .map {
+                            val data = it.getPublishData()
+                            data.lastTimeMillis = System.currentTimeMillis()
 
-                        when (data) {
-                            is GooglePublish -> {
-                                updateGooglePublishUseCase.execute(data)
-                            }
-                            is RESTPublish -> {
-                                updateRESTPublishUserCase.execute(data)
-                            }
-                            is MqttPublish -> {
-                                updateMqttPublishUseCase.execute(data)
-                            }
-                            else -> {
-                                throw IllegalArgumentException("Illegal data provided.")
+                            when (data) {
+                                is GooglePublish -> {
+                                    updateGooglePublishUseCase.execute(data)
+                                }
+                                is RESTPublish -> {
+                                    updateRESTPublishUserCase.execute(data)
+                                }
+                                is MqttPublish -> {
+                                    updateMqttPublishUseCase.execute(data)
+                                }
+                                else -> {
+                                    throw IllegalArgumentException("Illegal data provided.")
+                                }
                             }
                         }
-                    }
-                    .subscribe {
-                        it.subscribeOn(Schedulers.io()).subscribe()
-                    }
+                        .subscribe {
+                            it.subscribeOn(Schedulers.io()).subscribe()
+                        }
             }
         }
     }
 
     private fun handleInputsForActions() {
         readings
-            .concatMap { readingToInputUseCase.execute(it).toFlowable() }
-            .flatMapIterable { it }
-            .concatMap {
-                inputToOutcomesUseCase.execute(it)
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .toFlowable()
-            }
-            .flatMapIterable { it }
-            .subscribe {
-                runOutcomeUseCase.execute(it)
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe()
-            }
+                .concatMap { readingToInputUseCase.execute(it).toFlowable() }
+                .flatMapIterable { it }
+                .concatMap {
+                    inputToOutcomesUseCase.execute(it)
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .toFlowable()
+                }
+                .flatMapIterable { it }
+                .subscribe {
+                    runOutcomeUseCase.execute(it)
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe()
+                }
     }
 
     fun stopScanning() {
@@ -247,99 +250,114 @@ class BluetoothScanningService : Service() {
         recordReadingsDisposable?.dispose()
     }
 
+    @SuppressLint("CheckResult")
     private fun startLogging() {
         readings.subscribe {
             logReadingsUseCase.execute(it)
+            for (reading in it) {
+                if ("gyroscope z".equals(reading.name.toLowerCase())) {
+                    val readingValue = reading.value.toFloat() * gyro500Dps
+                    val reader = AdvertisementFormatReader()
+                    val fileData = reader.getFileData(assets, "formats/deltas.csv")
+                    if (!fileData.isNullOrBlank()) {
+                        println("delta found: $fileData")
+                    } else {
+                        println("Nothing found in deltas.csv")
+                        val firstReading = Reading(reading.timestamp, reading.device, 0, "deltas")
+                        logReadingsUseCase.overrideAndLogReading(firstReading)
+                    }
+                }
+            }
         }
     }
 
     private fun initPublishers() {
         Observable.merge(
-            getGooglePublisherObservable(),
-            getRestPublisherObservable(),
-            getMqttPublisherObservable()
+                getGooglePublisherObservable(),
+                getRestPublisherObservable(),
+                getMqttPublisherObservable()
         )
-            .toList()
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                Consumer {
-                    publishers = if (it.size < 1) {
-                        null
-                    } else {
-                        it
-                    }
+                .toList()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        Consumer {
+                            publishers = if (it.size < 1) {
+                                null
+                            } else {
+                                it
+                            }
 
-                    if (publishers != null) {
-                        publishReadingsUseCase = PublishReadingsUseCase(publishers!!)
-                        closeConnectionUseCase = CloseConnectionUseCase(publishers!!)
-                    }
-                }
-            )
+                            if (publishers != null) {
+                                publishReadingsUseCase = PublishReadingsUseCase(publishers!!)
+                                closeConnectionUseCase = CloseConnectionUseCase(publishers!!)
+                            }
+                        }
+                )
 
     }
 
     private fun getGooglePublisherObservable(): Observable<Publisher> {
         return getAllEnabledGooglePublishUseCase.execute()
-            .subscribeOn(Schedulers.io())
-            .toObservable()
-            .flatMapIterable { it }
-            .map { it as GooglePublish }
-            .flatMap {
-                Observable.just(it).zipWith(
-                    getDevicesThatConnectedWithGooglePublishUseCase.execute(it.id)
-                        .toObservable()
-                )
-            }.map {
-                GoogleCloudPublisher(
-                    this,
-                    it.first,
-                    it.second
-                ) as Publisher
-            }
+                .subscribeOn(Schedulers.io())
+                .toObservable()
+                .flatMapIterable { it }
+                .map { it as GooglePublish }
+                .flatMap {
+                    Observable.just(it).zipWith(
+                            getDevicesThatConnectedWithGooglePublishUseCase.execute(it.id)
+                                    .toObservable()
+                    )
+                }.map {
+                    GoogleCloudPublisher(
+                            this,
+                            it.first,
+                            it.second
+                    ) as Publisher
+                }
     }
 
     private fun getRestPublisherObservable(): Observable<Publisher> {
         return getAllEnabledRESTPublishUseCase.execute()
-            .subscribeOn(Schedulers.io())
-            .toObservable()
-            .flatMapIterable { it }
-            .map { it as RESTPublish }
-            .flatMap {
-                Observable.zip(
-                    Observable.just(it),
-                    getDevicesThatConnectedWithRESTPublishUseCase.execute(it.id).toObservable(),
-                    getRESTHeadersByIdUseCase.execute(it.id).toObservable(),
-                    getRESTHttpGetParamsByIdUseCase.execute(it.id).toObservable(),
-                    Function4<RESTPublish, List<Device>, List<RESTHeader>, List<RESTHttpGetParam>, Publisher> { t1, t2, t3, t4 ->
-                        RESTPublisher(
-                            t1,
-                            t2,
-                            t3,
-                            t4
-                        )
-                    }
-                )
-            }
+                .subscribeOn(Schedulers.io())
+                .toObservable()
+                .flatMapIterable { it }
+                .map { it as RESTPublish }
+                .flatMap {
+                    Observable.zip(
+                            Observable.just(it),
+                            getDevicesThatConnectedWithRESTPublishUseCase.execute(it.id).toObservable(),
+                            getRESTHeadersByIdUseCase.execute(it.id).toObservable(),
+                            getRESTHttpGetParamsByIdUseCase.execute(it.id).toObservable(),
+                            Function4<RESTPublish, List<Device>, List<RESTHeader>, List<RESTHttpGetParam>, Publisher> { t1, t2, t3, t4 ->
+                                RESTPublisher(
+                                        t1,
+                                        t2,
+                                        t3,
+                                        t4
+                                )
+                            }
+                    )
+                }
     }
 
     private fun getMqttPublisherObservable(): Observable<Publisher> {
         return getAllEnabledMqttPublishUseCase.execute()
-            .subscribeOn(Schedulers.io())
-            .toObservable()
-            .flatMapIterable { it }
-            .map { it as MqttPublish }
-            .flatMap {
-                Observable.just(it).zipWith(
-                    getDevicesThatConnectedWithMqttPublishUseCase.execute(it.id)
-                        .toObservable()
-                )
-            }.map {
-                MqttPublisher(
-                    this,
-                    it.first,
-                    it.second
-                ) as Publisher
-            }
+                .subscribeOn(Schedulers.io())
+                .toObservable()
+                .flatMapIterable { it }
+                .map { it as MqttPublish }
+                .flatMap {
+                    Observable.just(it).zipWith(
+                            getDevicesThatConnectedWithMqttPublishUseCase.execute(it.id)
+                                    .toObservable()
+                    )
+                }.map {
+                    MqttPublisher(
+                            this,
+                            it.first,
+                            it.second
+                    ) as Publisher
+                }
     }
 
     companion object {
