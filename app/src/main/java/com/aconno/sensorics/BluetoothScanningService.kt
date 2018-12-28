@@ -263,8 +263,10 @@ class BluetoothScanningService : Service() {
                         println("delta found: $fileData")
                     } else {
                         println("Nothing found in deltas.csv")
-                        val firstReading = Reading(reading.timestamp, reading.device, 0, "deltas")
+                        val firstReading = Reading(reading.timestamp, reading.device, readingValue, "deltas")
                         logReadingsUseCase.overrideAndLogReading(firstReading)
+                        val firstAngDisplReading = Reading(0, reading.device, 0, angularDisplacementName)
+                        logReadingsUseCase.logReading(firstAngDisplReading)
                     }
                 }
             }
