@@ -1,6 +1,5 @@
 package com.aconno.sensorics
 
-import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.Service
 import android.content.BroadcastReceiver
@@ -119,8 +118,6 @@ class BluetoothScanningService : Service() {
     private var closeConnectionUseCase: CloseConnectionUseCase? = null
     private var publishReadingsUseCase: PublishReadingsUseCase? = null
     private var publishers: MutableList<Publisher>? = null
-    private val gyro500Dps = 0.01750f
-    private val angularDisplacementName = "Angular Displacement"
 
     private val bluetoothScanningServiceComponent: BluetoothScanningServiceComponent by lazy {
         val sensoricsApplication: SensoricsApplication? = application as? SensoricsApplication
@@ -250,26 +247,9 @@ class BluetoothScanningService : Service() {
         recordReadingsDisposable?.dispose()
     }
 
-    @SuppressLint("CheckResult")
     private fun startLogging() {
         readings.subscribe {
             logReadingsUseCase.execute(it)
-            for (reading in it) {
-                if ("gyroscope z".equals(reading.name.toLowerCase())) {
-                    val readingValue = reading.value.toFloat() * gyro500Dps
-                    val reader = AdvertisementFormatReader()
-                    val fileData = reader.getFileData(assets, "formats/deltas.csv")
-                    if (!fileData.isNullOrBlank()) {
-                        println("delta found: $fileData")
-                    } else {
-                        println("Nothing found in deltas.csv")
-                        val firstReading = Reading(reading.timestamp, reading.device, readingValue, "deltas")
-                        logReadingsUseCase.overrideAndLogReading(firstReading)
-                        val firstAngDisplReading = Reading(0, reading.device, 0, angularDisplacementName)
-                        logReadingsUseCase.logReading(firstAngDisplReading)
-                    }
-                }
-            }
         }
     }
 

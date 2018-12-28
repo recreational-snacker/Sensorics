@@ -5,5 +5,4 @@ import com.aconno.sensorics.domain.model.Reading
 interface FileStorage {
 
     fun storeReading(reading: Reading, fileName: String)
-    fun overrideAndStoreReading(reading: Reading, fileName: String)
 }

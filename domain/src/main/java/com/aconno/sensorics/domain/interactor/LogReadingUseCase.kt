@@ -16,17 +16,8 @@ class LogReadingUseCase(
         return Completable.complete()
     }
 
-    fun subtract(a: Long, b: Long): Long {
-        return a - b
-    }
-
-    fun logReading(reading: Reading) {
+    private fun logReading(reading: Reading) {
         val fileName = "${reading.name.toLowerCase()}.csv"
         fileStorage.storeReading(reading, fileName)
-    }
-
-    fun overrideAndLogReading(reading: Reading) {
-        val fileName = "${reading.name.toLowerCase()}.csv"
-        fileStorage.overrideAndStoreReading(reading, fileName)
     }
 }

@@ -19,17 +19,4 @@ class FileStorageImpl(private val context: Context) : FileStorage {
             }
         }
     }
-
-    override fun overrideAndStoreReading(reading: Reading, fileName: String) {
-        val file = File(context.getExternalFilesDir(null), fileName)
-        val pw = PrintWriter(file.absolutePath)
-        pw.close()
-        val fileOutputStream = FileOutputStream(file, false)
-        val printWriter = PrintWriter(fileOutputStream)
-        fileOutputStream.use {
-            printWriter.use { out ->
-                out.appendln(reading.toCsvString())
-            }
-        }
-    }
 }

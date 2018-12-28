@@ -16,8 +16,8 @@ class AdvertisementFormatReader {
     }
 
     private val gson: Gson = GsonBuilder()
-        .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-        .create()
+            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+            .create()
 
     fun readFlowable(context: Context): Flowable<List<GenericFormatModel>> {
         return Flowable.fromCallable {
@@ -45,7 +45,7 @@ class AdvertisementFormatReader {
         return gson.fromJson(data, GenericFormatModel::class.java)
     }
 
-    fun getFileData(assetManager: AssetManager, fileName: String): String {
+    private fun getFileData(assetManager: AssetManager, fileName: String): String {
         val inputStream = assetManager.open(fileName)
         val size = inputStream.available()
         val buffer = ByteArray(size)
