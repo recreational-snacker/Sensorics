@@ -64,10 +64,10 @@ class LogReadingUseCase(
         }
         timestamp = event?.timestamp?.toFloat() ?: 0f
         val deltaRotationMatrix = FloatArray(9) { 0f }
-        SensorManager.getRotationMatrixFromVector(deltaRotationMatrix, deltaRotationVector);
+        SensorManager.getRotationMatrixFromVector(deltaRotationMatrix, deltaRotationVector)
         // User code should concatenate the delta rotation we computed with the current rotation
         // in order to get the updated rotation.
-        // rotationCurrent = rotationCurrent * deltaRotationMatrix;
+        // rotationCurrent = rotationCurrent * deltaRotationMatrix
     }
 
     override fun execute(parameter: List<Reading>): Completable {
@@ -113,7 +113,7 @@ class LogReadingUseCase(
                 }
                 timestamp = event?.timestamp?.toFloat() ?: 0f
                 val deltaRotationMatrix = FloatArray(9) { 0f }
-                SensorManager.getRotationMatrixFromVector(deltaRotationMatrix, deltaRotationVector);
+                SensorManager.getRotationMatrixFromVector(deltaRotationMatrix, deltaRotationVector)
                 // User code should concatenate the delta rotation we computed with the current rotation
                 // in order to get the updated rotation.
                 // rotationCurrent = rotationCurrent * deltaRotationMatrix;
