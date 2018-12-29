@@ -36,7 +36,7 @@ class SensorAnalyser(
 
                     // Calculate the angular speed of the sample
                     val omegaMagnitude: Float = sqrt(axisX * axisX + axisY * axisY + axisZ * axisZ)
-
+                    println("omegaMagnitude: $omegaMagnitude")
                     // Normalize the rotation vector if it's big enough to get the axis
                     // (that is, EPSILON should represent your maximum allowable margin of error)
                     //TODO figure out this margin of error? Experimentation?
@@ -69,6 +69,7 @@ class SensorAnalyser(
                 val previousDeltaRotationMatrix = FloatArray(9) { 0f }
                 SensorManager.getAngleChange(angleChange, deltaRotationMatrix, previousDeltaRotationMatrix)
                 val deltaZ: Float = angleChange[2]
+                println("deltaZ: $deltaZ")
                 val currentZ: Float = deltaZ// + previousZ //@! Duvan still in the issue with getting the previous dataset
                 val angle = Reading(reading.timestamp, reading.device, currentZ, angularDisplFileName)
                 val angleList: MutableList<Reading> = mutableListOf(angle)
