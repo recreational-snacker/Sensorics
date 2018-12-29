@@ -5,13 +5,15 @@ import com.aconno.sensorics.domain.interactor.LogReadingUseCase
 import com.aconno.sensorics.domain.interactor.type.CompletableUseCaseWithParameter
 import com.aconno.sensorics.domain.model.Reading
 import io.reactivex.Completable
+import javax.inject.Inject
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-class SensorAnalyser(
-        private val logReadingUseCase: LogReadingUseCase
-) : CompletableUseCaseWithParameter<List<Reading>> {
+class SensorAnalyser : CompletableUseCaseWithParameter<List<Reading>> {
+
+    @Inject
+    lateinit var logReadingsUseCase: LogReadingUseCase
 
     // @! Deesha Singh - Create a constant to convert nanoseconds to seconds.
     // private val GYRO_DPS_DIGIT_500DPS = 0.01750f //TODO figure out what to do with this
@@ -21,7 +23,7 @@ class SensorAnalyser(
     private val angularDisplFileName = "Angular Displacement"
 
     override fun execute(parameter: List<Reading>): Completable {
-        logReadingUseCase.execute(parameter) //Log all the readings first
+        logReadingsUseCase.execute(parameter) //Log all the readings first
         for (reading in parameter) {
             // @! Deesha Singh -  based on your original idea - is this still correct?  @! Duvan De Koker the readings are individual to the
             //gyroscope axis in this case, not sure how we'll get a full set of data (would have to match by timestamp or something?)
@@ -73,7 +75,7 @@ class SensorAnalyser(
                 val currentZ: Float = deltaZ// + previousZ //@! Duvan still in the issue with getting the previous dataset
                 val angle = Reading(reading.timestamp, reading.device, currentZ, angularDisplFileName)
                 val angleList: MutableList<Reading> = mutableListOf(angle)
-                logReadingUseCase.execute(angleList)
+                logReadingsUseCase.execute(angleList)
             }
         }
         return Completable.complete()

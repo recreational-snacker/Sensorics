@@ -57,9 +57,6 @@ class BluetoothScanningService : Service() {
     lateinit var saveSensorReadingsUseCase: SaveSensorReadingsUseCase
 
     @Inject
-    lateinit var logReadingsUseCase: LogReadingUseCase
-
-    @Inject
     lateinit var inputToOutcomesUseCase: InputToOutcomesUseCase
 
     @Inject
@@ -120,7 +117,7 @@ class BluetoothScanningService : Service() {
     private var publishReadingsUseCase: PublishReadingsUseCase? = null
     private var publishers: MutableList<Publisher>? = null
 
-    var sensorAnalyser: SensorAnalyser = SensorAnalyser(logReadingsUseCase)
+    var sensorAnalyser: SensorAnalyser = SensorAnalyser()
 
     private val bluetoothScanningServiceComponent: BluetoothScanningServiceComponent by lazy {
         val sensoricsApplication: SensoricsApplication? = application as? SensoricsApplication
