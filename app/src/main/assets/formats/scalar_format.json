@@ -4,9 +4,9 @@
   "format": [
     {
       "name": "Angular Displacement",
-      "start_index_inclusive": 5,   //TODO what?
+      "start_index_inclusive": 5,
       "end_index_exclusive": 9,
-      "reversed": true,  //read the file backwards, recent results are at the bottom
+      "reversed": true,
       "data_type": "FLOAT"
     },
     {
