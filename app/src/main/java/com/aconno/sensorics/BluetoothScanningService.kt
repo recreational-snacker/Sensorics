@@ -1,5 +1,6 @@
 package com.aconno.sensorics
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.Service
 import android.content.BroadcastReceiver
@@ -43,7 +44,7 @@ import io.reactivex.rxkotlin.zipWith
 import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 
-
+@SuppressLint("CheckResult")
 class BluetoothScanningService : Service() {
 
     @Inject
@@ -118,6 +119,8 @@ class BluetoothScanningService : Service() {
     private var closeConnectionUseCase: CloseConnectionUseCase? = null
     private var publishReadingsUseCase: PublishReadingsUseCase? = null
     private var publishers: MutableList<Publisher>? = null
+
+    var sensorAnalyser: SensorAnalyser = SensorAnalyser(logReadingsUseCase)
 
     private val bluetoothScanningServiceComponent: BluetoothScanningServiceComponent by lazy {
         val sensoricsApplication: SensoricsApplication? = application as? SensoricsApplication
@@ -249,7 +252,8 @@ class BluetoothScanningService : Service() {
 
     private fun startLogging() {
         readings.subscribe {
-            logReadingsUseCase.execute(it)
+            sensorAnalyser.execute(it)
+//            logReadingsUseCase.execute(it)
         }
     }
 
